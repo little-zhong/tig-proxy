@@ -28,6 +28,7 @@ def proxy_request(endpoint):
             "method": request.method,
             "url": request.url,
             "body": request.json if request.is_json else request.data.decode(),
+            "headers": dict(request.headers),
         }
 
         # 发送请求
