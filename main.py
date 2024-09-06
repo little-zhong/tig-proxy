@@ -37,7 +37,11 @@ def proxy_request(endpoint):
             url=api_url,
             params=request.args if request.method == "GET" else None,
             json=request.json if request.method == "POST" else None,
-            headers=dict(request.headers),
+            headers=(
+                {"X-Api-Key": request.headers.get("X-Api-Key")}
+                if req_data["headers"].get("X-Api-Key")
+                else None
+            ),
         )
 
         # 准备响应数据
