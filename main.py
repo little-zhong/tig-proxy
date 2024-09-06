@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from curl_cffi import requests
+import requests
 import logging
 
 app = Flask(__name__)
@@ -38,7 +38,6 @@ def proxy_request(endpoint):
             params=request.args if request.method == "GET" else None,
             json=request.json if request.method == "POST" else None,
             headers=dict(request.headers),
-            impersonate="chrome",
         )
 
         # 准备响应数据
