@@ -1,17 +1,17 @@
-# 使用官方Python运行时作为父镜像
+# Use the official Python runtime as the base image
 FROM python:3.9-slim
 
-# 设置工作目录
+# Set the working directory
 WORKDIR /app
 
-# 将当前目录内容复制到容器的/app中
+# Copy the current directory contents into the container at /app
 COPY . /app
 
-# 安装项目依赖
+# Install project dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 暴露应用程序运行的端口
+# Expose the port the app runs on
 EXPOSE 5151
 
-# 运行应用程序
+# Run the application
 CMD ["python", "main.py"]
