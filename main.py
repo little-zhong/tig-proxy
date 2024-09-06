@@ -37,6 +37,7 @@ def proxy_request(endpoint):
             url=api_url,
             params=request.args if request.method == "GET" else None,
             json=request.json if request.method == "POST" else None,
+            headers=request.headers,
             impersonate="chrome",
         )
 
