@@ -1,22 +1,19 @@
 from flask import Flask, request, jsonify
 import requests
-import logging
+from loguru import logger
 
 app = Flask(__name__)
 
-# 设置日志记录
-logging.basicConfig(
-    filename="request_logs.log",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s: %(message)s",
-)
+# 设置日志记录 每天一个文件 保留7天
+logger.add("logs/{time:YYYY-MM-DD}.log", rotation="1 week", retention="7 days")
+
 
 API_BASE_URL = "https://mainnet-api.tig.foundation"
 
 
 def log_request_response(req_data, resp_data):
-    logging.info(f"Incoming request: {req_data}")
-    logging.info(f"API response: {resp_data}")
+    logger.info(f"Incoming request: {req_data}")
+    logger.info(f"API response: {resp_data}")
 
 
 @app.route("/<path:endpoint>", methods=["GET", "POST"])
@@ -57,9 +54,9 @@ def proxy_request(endpoint):
         return jsonify(resp_data), api_response.status_code
 
     except Exception as e:
-        logging.exception(f"Error occurred: {e}")
+        logger.exception(f"Error occurred: {e}")
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5151, debug=True)
+    app.run(host="0.0.0.0", port=5151, debug=False)
