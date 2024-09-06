@@ -1,14 +1,14 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 from loguru import logger
 
 app = Flask(__name__)
 
-# 设置日志记录 每天一个文件 保留7天
+# Set up logging: one file per day, keep for 7 days
 logger.add("logs/{time:YYYY-MM-DD}.log", rotation="1 week", retention="7 days")
 
-
-API_BASE_URL = "https://mainnet-api.tig.foundation"
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://mainnet-api.tig.foundation")
 
 
 def log_request_response(req_data, resp_data):
@@ -19,7 +19,7 @@ def log_request_response(req_data, resp_data):
 @app.route("/<path:endpoint>", methods=["GET", "POST"])
 def proxy_request(endpoint):
     try:
-        # 准备请求数据
+        # Prepare request data
         api_url = f"{API_BASE_URL}/{endpoint}"
         req_data = {
             "method": request.method,
@@ -28,7 +28,7 @@ def proxy_request(endpoint):
             "headers": dict(request.headers),
         }
 
-        # 发送请求
+        # Send request
         api_response = requests.request(
             method=request.method,
             url=api_url,
@@ -39,23 +39,35 @@ def proxy_request(endpoint):
                 if req_data["headers"].get("X-Api-Key")
                 else None
             ),
+            timeout=10,  # Add 10 seconds timeout
         )
 
-        # 准备响应数据
+        # Prepare response data
         resp_data = (
             api_response.json()
             if api_response.headers.get("Content-Type") == "application/json"
             else api_response.text
         )
 
-        # 记录请求和响应
+        # Log request and response
         log_request_response(req_data, resp_data)
 
         return jsonify(resp_data), api_response.status_code
 
+    except requests.RequestException as e:
+        logger.exception(f"API request error: {e}")
+        return jsonify({"error": "Failed to reach the API server"}), 503
+    except ValueError as e:
+        logger.exception(f"JSON parsing error: {e}")
+        return jsonify({"error": "Invalid JSON in response"}), 502
     except Exception as e:
-        logger.exception(f"Error occurred: {e}")
-        return jsonify({"error": str(e)}), 500
+        logger.exception(f"Unexpected error: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
 
 
 if __name__ == "__main__":
